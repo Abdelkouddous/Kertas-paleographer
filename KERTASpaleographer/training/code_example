@@ -1,0 +1,26 @@
+clc; clear all;
+tic;
+repsource = '';
+repfeatures = '';
+xt = '*.png'; % sinon jpg
+chemin = fullfile(repsource, xt);
+list =  dir(chemin)
+nfile = length(list);
+for i = 2:length(coef)%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%parcours d'espace des parametres
+    param1 = coef(i,1);
+    param2 = coef(i,2);
+    vec = [];
+    for j=1:nfile
+        inf = list(j).name; j
+        disp('___processed')
+        img = imread(fullfile(repsource, inf), xt(3:end));
+        map = getmapping(param2,'riu2');%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        [fv] = LCP(double(img), param1, param2, map,'i');%%%%%%%%%%%lcp extraction
+        fv = fv';
+        vec = [vec;fv];
+    end    
+    named = inf(1:end-4);%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% saving step
+    fichier = [repfeatures,'\',named,'_',int2str(param1),'_',int2str(param2),'.mat'];
+    save(fichier,'vec');
+    disp('___saved');
+end
