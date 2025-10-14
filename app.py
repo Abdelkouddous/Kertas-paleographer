@@ -34,7 +34,7 @@ from sklearn.model_selection import GridSearchCV
 # ============================================================================
 
 st.set_page_config(
-    page_title="ML Classification System",
+    page_title="KERTAS Paleographer",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -873,7 +873,7 @@ def main():
 @software{kertas_paleographer_2024,
   author = {Hamel, Aymen Abdelkouddous},
   title = {KERTAS Paleographer: A Machine Learning Classification System},
-  year = {2024},
+  year = {2022},
   version = {1.0},
   url = {https://github.com/yourrepo/kertas-paleographer}
 }
