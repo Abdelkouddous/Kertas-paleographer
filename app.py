@@ -28,6 +28,7 @@ from sklearn.metrics import (
     classification_report
 )
 from sklearn.model_selection import GridSearchCV
+from cost_function_visualization import CostFunctionVisualizer, generate_sample_data
 
 # ============================================================================
 # PAGE CONFIGURATION
@@ -196,7 +197,7 @@ def train_model(model_name, feature_type, use_grid_search, X_train, y_train):
             status_text.text("Training AdaBoost model...")
             progress_bar.progress(25)
             
-            DTC = DecisionTreeClassifier(random_state=11, max_features="auto",
+            DTC = DecisionTreeClassifier(random_state=11, max_features=0.8,
                                         class_weight="balanced", max_depth=None)
             model = AdaBoostClassifier(estimator=DTC)
             model.fit(X_train, y_train)
@@ -265,7 +266,7 @@ def main():
                 unsafe_allow_html=True)
     
     # Navigation tabs
-    tab1, tab2, tab3 = st.tabs(["🚀 Train Models", "📊 About Project", "📚 Documentation"])
+    tab1, tab2, tab3, tab4 = st.tabs(["🚀 Train Models", "📊 Cost Function Visualization", "📊 About Project", "📚 Documentation"])
     
     # Initialize session state
     if 'trained_model' not in st.session_state:
@@ -642,10 +643,215 @@ def main():
                 st.dataframe(df_results.drop(columns=['Score']), use_container_width=True)
     
     # ========================================================================
-    # TAB 2: ABOUT PROJECT
+    # TAB 2: COST FUNCTION VISUALIZATION
     # ========================================================================
     
     with tab2:
+        st.markdown("---")
+        st.header("📊 Cost Function Visualization")
+        st.markdown("Interactive visualization of cost function J(w,b) for linear regression with gradient descent")
+        
+        # Sidebar controls for cost function
+        with st.sidebar:
+            st.markdown("---")
+            st.markdown("### 📊 Cost Function Controls")
+            
+            # Data generation parameters
+            st.markdown("#### Data Parameters")
+            n_samples = st.slider("Number of samples", 20, 200, 50, key="cost_n_samples")
+            noise_level = st.slider("Noise level", 0.1, 5.0, 2.0, 0.1, key="cost_noise")
+            random_state = st.number_input("Random seed", 0, 100, 42, key="cost_seed")
+            
+            # Training parameters
+            st.markdown("#### Training Parameters")
+            learning_rate = st.slider("Learning rate (α)", 0.001, 1.0, 0.1, 0.001, key="cost_lr")
+            num_iterations = st.slider("Number of iterations", 100, 5000, 1000, 100, key="cost_iters")
+            
+            # Visualization parameters
+            st.markdown("#### Visualization Parameters")
+            w_range = st.slider("Weight range", -5.0, 5.0, (-3.0, 3.0), key="cost_w_range")
+            b_range = st.slider("Bias range", -5.0, 5.0, (-3.0, 3.0), key="cost_b_range")
+            show_trajectory = st.checkbox("Show gradient descent trajectory", True, key="cost_trajectory")
+        
+        # Generate data
+        if st.button("🔄 Generate New Data", key="cost_generate"):
+            st.rerun()
+        
+        # Generate sample data
+        X, y = generate_sample_data(n_samples=n_samples, noise_level=noise_level, random_state=random_state)
+        
+        # Create visualizer
+        visualizer = CostFunctionVisualizer(X, y)
+        
+        # Run gradient descent
+        with st.spinner("Running gradient descent..."):
+            w_history, b_history, cost_history = visualizer.gradient_descent(
+                w_init=0.0, b_init=0.0, alpha=learning_rate, num_iters=num_iterations
+            )
+        
+        # Display results
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Final Weight (w)", f"{visualizer.w:.4f}")
+        with col2:
+            st.metric("Final Bias (b)", f"{visualizer.b:.4f}")
+        with col3:
+            st.metric("Final Cost", f"{cost_history[-1]:.6f}")
+        with col4:
+            st.metric("Iterations", f"{len(cost_history)}")
+        
+        # Create tabs for different visualizations
+        cost_tab1, cost_tab2, cost_tab3, cost_tab4 = st.tabs([
+            "📊 Data & Fit", "🎯 2D Contour", "🌐 3D Surface", "📈 Convergence"
+        ])
+        
+        with cost_tab1:
+            st.subheader("Data and Linear Fit")
+            st.markdown("""
+            This plot shows the original training data and the fitted linear regression line.
+            The line represents the model's prediction: **y = w·x + b**
+            """)
+            fig_fit = visualizer.plot_data_and_fit()
+            st.pyplot(fig_fit)
+            
+            # Show equation
+            st.info(f"""
+            **Fitted Equation:** y = {visualizer.w:.4f}·x + {visualizer.b:.4f}
+            
+            **Cost Function:** J(w,b) = (1/2m) Σ(f_wb - y)²
+            """)
+        
+        with cost_tab2:
+            st.subheader("2D Cost Function Contour")
+            st.markdown("""
+            This contour plot shows the cost function J(w,b) as a function of weight (w) and bias (b).
+            The red line shows the path taken by gradient descent during optimization.
+            """)
+            fig_2d = visualizer.plot_2d_cost_contour(
+                w_range=w_range, b_range=b_range, show_trajectory=show_trajectory
+            )
+            st.pyplot(fig_2d)
+            
+            # Explanation
+            with st.expander("ℹ️ Understanding the 2D Contour Plot"):
+                st.markdown("""
+                **What you're seeing:**
+                - **Contour lines**: Lines of equal cost - the closer together, the steeper the gradient
+                - **Color gradient**: Darker colors = lower cost (better fit)
+                - **Red trajectory**: Path taken by gradient descent algorithm
+                - **Green dot**: Starting point (w=0, b=0)
+                - **Red star**: Final optimized parameters
+                - **Yellow star**: True minimum of the cost function
+                
+                **Key insights:**
+                - The algorithm starts at a high cost and moves toward lower cost
+                - The path follows the steepest descent direction
+                - Convergence occurs when the algorithm reaches the minimum
+                """)
+        
+        with cost_tab3:
+            st.subheader("3D Cost Function Surface")
+            st.markdown("""
+            This 3D surface plot shows the cost function J(w,b) as a 3D landscape.
+            The red line shows the gradient descent path through this landscape.
+            """)
+            fig_3d = visualizer.plot_3d_cost_surface(
+                w_range=w_range, b_range=b_range, show_trajectory=show_trajectory
+            )
+            st.pyplot(fig_3d)
+            
+            # Explanation
+            with st.expander("ℹ️ Understanding the 3D Surface Plot"):
+                st.markdown("""
+                **What you're seeing:**
+                - **Surface**: The cost function landscape - valleys are good (low cost), peaks are bad (high cost)
+                - **Color**: Height represents cost - blue/purple = low cost, yellow = high cost
+                - **Red path**: Gradient descent trajectory through the landscape
+                - **Green dot**: Starting position
+                - **Red star**: Final optimized position
+                
+                **Key insights:**
+                - The algorithm "rolls down" the cost surface
+                - It always moves in the direction of steepest descent
+                - The goal is to reach the bottom of the valley (minimum cost)
+                """)
+        
+        with cost_tab4:
+            st.subheader("Cost Function Convergence")
+            st.markdown("""
+            These plots show how the cost function and parameters change during training.
+            """)
+            fig_conv = visualizer.plot_cost_convergence()
+            st.pyplot(fig_conv)
+            
+            # Additional metrics
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("#### 📊 Convergence Metrics")
+                initial_cost = cost_history[0]
+                final_cost = cost_history[-1]
+                improvement = ((initial_cost - final_cost) / initial_cost) * 100
+                
+                st.metric("Initial Cost", f"{initial_cost:.6f}")
+                st.metric("Final Cost", f"{final_cost:.6f}")
+                st.metric("Improvement", f"{improvement:.2f}%")
+            
+            with col2:
+                st.markdown("#### 📈 Parameter Changes")
+                w_change = abs(visualizer.w - w_history[0])
+                b_change = abs(visualizer.b - b_history[0])
+                
+                st.metric("Weight Change", f"{w_change:.4f}")
+                st.metric("Bias Change", f"{b_change:.4f}")
+                st.metric("Total Iterations", f"{len(cost_history)}")
+        
+        # Mathematical explanation
+        st.markdown("---")
+        st.markdown("### 🧮 Mathematical Background")
+        
+        math_col1, math_col2 = st.columns(2)
+        
+        with math_col1:
+            st.markdown("""
+            **Linear Regression Model:**
+            ```
+            f_wb(x) = w·x + b
+            ```
+            
+            **Cost Function:**
+            ```
+            J(w,b) = (1/2m) Σ(f_wb(x⁽ⁱ⁾) - y⁽ⁱ⁾)²
+            ```
+            
+            **Gradient Descent:**
+            ```
+            w = w - α·∂J/∂w
+            b = b - α·∂J/∂b
+            ```
+            """)
+        
+        with math_col2:
+            st.markdown("""
+            **Gradients:**
+            ```
+            ∂J/∂w = (1/m) Σ(f_wb(x⁽ⁱ⁾) - y⁽ⁱ⁾)·x⁽ⁱ⁾
+            ∂J/∂b = (1/m) Σ(f_wb(x⁽ⁱ⁾) - y⁽ⁱ⁾)
+            ```
+            
+            **Where:**
+            - m = number of training examples
+            - α = learning rate
+            - x⁽ⁱ⁾ = i-th training example
+            - y⁽ⁱ⁾ = i-th target value
+            """)
+    
+    # ========================================================================
+    # TAB 3: ABOUT PROJECT
+    # ========================================================================
+    
+    with tab3:
         st.markdown("---")
         
         # Project Overview
@@ -820,25 +1026,25 @@ def main():
         │                  KERTAS Paleographer                    │
         ├─────────────────────────────────────────────────────────┤
         │                                                         │
-        │  ┌──────────────┐      ┌─────────────────┐            │
-        │  │ Data Loading │─────→│  Preprocessing  │            │
-        │  └──────────────┘      └─────────────────┘            │
-        │         │                        │                     │
-        │         ↓                        ↓                     │
-        │  ┌──────────────┐      ┌─────────────────┐            │
-        │  │Feature Extract│      │  Model Training │            │
-        │  │(ChainCode/Poly)     │  (SVM/RF/GBT/AB)│            │
-        │  └──────────────┘      └─────────────────┘            │
-        │         │                        │                     │
-        │         ↓                        ↓                     │
-        │  ┌──────────────┐      ┌─────────────────┐            │
-        │  │  Evaluation  │←─────│   Prediction    │            │
-        │  └──────────────┘      └─────────────────┘            │
-        │         │                                              │
-        │         ↓                                              │
-        │  ┌──────────────────────────────┐                     │
-        │  │  Results & Visualization     │                     │
-        │  └──────────────────────────────┘                     │
+        │  ┌──────────────┐      ┌─────────────────┐              │
+        │  │ Data Loading │─────→│  Preprocessing  │              │ 
+        │  └──────────────┘      └─────────────────┘              │
+        │         │                        │                      │
+        │         ↓                        ↓                      │
+        │  ┌──────────────┐      ┌─────────────────┐              │
+        │  │Feature Extract│     │  Model Training │              │
+        │  │(ChainCode/Poly)     │  (SVM/RF/GBT/AB)│              │
+        │  └──────────────┘      └─────────────────┘              │
+        │         │                        │                      │
+        │         ↓                        ↓                      │
+        │  ┌──────────────┐      ┌─────────────────┐              │
+        │  │  Evaluation  │←─────│   Prediction    │              │
+        │  └──────────────┘      └─────────────────┘              │
+        │         │                                               │
+        │         ↓                                               │
+        │  ┌──────────────────────────────┐                       │
+        │  │  Results & Visualization     │                       │
+        │  └──────────────────────────────┘                       │
         └─────────────────────────────────────────────────────────┘
         ```
         """)
@@ -870,7 +1076,7 @@ def main():
         # Citation
         with st.expander("📄 How to Cite This Work"):
             st.code("""
-@software{kertas_paleographer_2024,
+@software{kertas_paleographer_2022,
   author = {Hamel, Aymen Abdelkouddous},
   title = {KERTAS Paleographer: A Machine Learning Classification System},
   year = {2022},
@@ -880,10 +1086,10 @@ def main():
             """, language="bibtex")
     
     # ========================================================================
-    # TAB 3: DOCUMENTATION
+    # TAB 4: DOCUMENTATION
     # ========================================================================
     
-    with tab3:
+    with tab4:
         st.markdown("---")
         
         st.markdown("## 📚 Documentation & Help")
@@ -1059,9 +1265,8 @@ def main():
         st.info("""
         **For questions, issues, or contributions:**
         
-        📧 Email: aymen.hamel@university.edu  
-        💻 GitHub: github.com/yourrepo/kertas-paleographer  
-        📝 Report Issues: github.com/yourrepo/issues  
+        📧 Email: abdelkouddous.hamel@gmail.com  
+        💻 GitHub: github.com/Abdelkouddous/Kertas-paleographer  
         🌟 Star the project if you find it useful!
         """)
     
@@ -1069,7 +1274,7 @@ def main():
     st.markdown("---")
     st.markdown("""
     <div style='text-align: center; color: #666;'>
-        <p>🤖 KERTAS Paleographer | Built with Streamlit | © 2025TypeError: AdaBoostClassifier.__init__() got an unexpected keyword argument 'base_estimator'</p>
+        <p>🤖 KERTAS Paleographer | Built with Streamlit | © 2025</p>
     </div>
     """, unsafe_allow_html=True)
 

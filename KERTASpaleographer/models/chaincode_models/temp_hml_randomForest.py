@@ -1,96 +1,66 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Apr 28 12:25:41 2022
+Created on Sat Apr 23 00:53:31 2022
 
-@author: aymen abdelkouddous hamel
-GBT
+@author: aymen
 """
-# Import all relevant libraries
 
-from sklearn.ensemble import GradientBoostingClassifier
-import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-#import warnings
+#import numpy as np
+# Import the model we are using
+from sklearn.metrics import  confusion_matrix, classification_report, accuracy_score
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
-#
+import numpy as np
 import matplotlib as plt
 import seaborn as sns
 import os
 
-# Get the directory where this script is located
-script_dir = os.path.dirname(os.path.abspath(__file__))
+# Dynamic paths - works anywhere after cloning from GitHub
+# Go up two levels: from models/chaincode_models/ to KERTASpaleographer/
+script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Build paths relative to script location
-feature_training_data_path = os.path.join(script_dir, 'training', 'features_training_ChainCodeGlobalFE.csv')
-# Note: testing file has lowercase 'c' in chainCode
-feature_testing_data_path = os.path.join(script_dir, 'testing', 'features_testing_chainCodeGlobalFE.csv')
+#Accuracy score do not work on regression
+'''Features file X'''
+X = pd.read_csv(os.path.join(script_dir, 'training', 'features_training_ChainCodeGlobalFE.csv'))
+Xt = pd.read_csv(os.path.join(script_dir, 'testing', 'features_testing_chainCodeGlobalFE.csv'))
 
-label_training_path = os.path.join(script_dir, 'training', 'label_training.csv')
-label_testing_path = os.path.join(script_dir, 'testing', 'label_testing.csv')
+Y = pd.read_csv(os.path.join(script_dir, 'training', 'label_training.csv'))
+Yt = pd.read_csv(os.path.join(script_dir, 'testing', 'label_testing.csv'))
 
-print(f"Loading training features from: {feature_training_data_path}")
-print(f"Loading testing features from: {feature_testing_data_path}")
+print(f"✓ Data loaded | Training: {X.shape[0]} samples, Testing: {Xt.shape[0]} samples")
+'''X et Xt sont le training et testing dataset 
+Y et Yt sont le training et testing labels '''
 
-X = pd.read_csv(feature_training_data_path)
-Xt = pd.read_csv(feature_testing_data_path)
 
-Y = pd.read_csv(label_training_path)
-Yt = pd.read_csv(label_testing_path)
+# Instantiate model with 1000 decision trees estimators is the number of elemnts of the data
+#for estimator in range (100,105,1):
 
-print(f"✓ Data loaded successfully!")
-print(f"  Training samples: {X.shape[0]}, Features: {X.shape[1]}")
-print(f"  Testing samples: {Xt.shape[0]}, Features: {Xt.shape[1]}")
-
-#warnings.filterwarnings("ignore")
-
-'''section 1 grid searching'''
-
-'''grid = { 
-    #To add max depths
-
-    'learning_rate':[0.01,0.05,0.1],
-
-    'n_estimators':np.arange(100,400,100),
-
+params = {
+    'n_estimators': [5, 10, 20,100],
+    'max_depth': [1, 5, 10,20],
 }
+grid_search = GridSearchCV(RandomForestClassifier(), param_grid=params, n_jobs=-1)
+grid_search.fit(X, Y.values.ravel())
+#score_randomForest_grid = np.round(grid_search.score(Xt, Yt), 3)
+#print(f"Best random forest classifier score: {score_randomForest_grid}" )
+best_params_RF=grid_search.best_params_
+best_estimator_RF=grid_search.best_estimator_
+print('Using the RF algorithm')
+#Accuracy_randomForest_grid=accuracy_score(Yt,grid_search.predict(Xt))
+rf = RandomForestClassifier(n_estimators = best_params_RF['n_estimators'], 
+                           max_depth=best_params_RF['max_depth'])
+rf.fit(X,Y.values.ravel())
+predictions_RF=rf.predict(Xt)
+accuracy_randomForest = accuracy_score(Yt, predictions_RF) #Varience 
+print('best score is : ' , accuracy_randomForest, '\n')
+print(classification_report(Yt, predictions_RF))
+print(confusion_matrix(Yt,predictions_RF))
 
-print('Processing grid search ... ')
-
-gb = GradientBoostingClassifier()
-
-gb_cv = GridSearchCV(gb, grid, cv = 4) #cv=4 default
-
-gb_cv.fit(X, Y.values.ravel())
-
-print("Best Parameters:",gb_cv.best_params_)
-
-print("Train Score:",gb_cv.best_score_)
-
-print("Test Score:",gb_cv.score(Xt,Yt))
-
-Accuracy_Gradient_grid=accuracy_score(Yt.values.ravel(), gb_cv.predict(Xt))
-
-'''
-
-#best_params_GBT=gb_cv.best_params_
-
-gbc=GradientBoostingClassifier(n_estimators=300,learning_rate=0.1,random_state=100 )
-
-# Fit train data to GBC
-
-gbc.fit(X, Y.values.ravel())
-Accuracy_gradientBoost =accuracy_score(Yt, gbc.predict(Xt))
-
-print("GBC accuracy is %2.2f " % (Accuracy_gradientBoost))
-
-print('Confusion matrix; ', confusion_matrix(Yt, gbc.predict(Xt)))
-
-print('Classification report: ' , classification_report(Yt, gbc.predict(Xt)))
-
-'''plotting
-'''
+'''random state est plus lourd quand on l'augemente mais le taux d'err diminue
+c'est pas le cas pour l'estmator '''
+'''plotting'''
 matrix=confusion_matrix(Yt,predictions_RF)
 #configuring the matrix 
 matrix = matrix.astype('float') / matrix.sum(axis=1)[:, np.newaxis]

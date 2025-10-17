@@ -3,7 +3,7 @@
 """
 Created on Thu Apr 28 12:25:41 2022
 
-@author: aymen
+@author: aymen abdelkouddous hamel
 GBT
 """
 # Import all relevant libraries
@@ -19,22 +19,36 @@ import matplotlib as plt
 import seaborn as sns
 import os
 
-# Dynamic paths - works anywhere after cloning from GitHub
-script_dir = os.path.dirname(os.path.abspath(__file__))
+# Get the directory where this script is located
+# Go up two levels: from models/chaincode_models/ to KERTASpaleographer/
+script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-X = pd.read_csv(os.path.join(script_dir, 'training', 'features_training_PolygonFE.csv'))
-Xt = pd.read_csv(os.path.join(script_dir, 'testing', 'features_testing_PolygonFE.csv'))
+# Build paths relative to script location
+feature_training_data_path = os.path.join(script_dir, 'training', 'features_training_ChainCodeGlobalFE.csv')
+# Note: testing file has lowercase 'c' in chainCode
+feature_testing_data_path = os.path.join(script_dir, 'testing', 'features_testing_chainCodeGlobalFE.csv')
 
-Y = pd.read_csv(os.path.join(script_dir, 'training', 'label_training.csv'))
-Yt = pd.read_csv(os.path.join(script_dir, 'testing', 'label_testing.csv'))
+label_training_path = os.path.join(script_dir, 'training', 'label_training.csv')
+label_testing_path = os.path.join(script_dir, 'testing', 'label_testing.csv')
 
-print(f"✓ Data loaded | Training: {X.shape[0]} samples, Testing: {Xt.shape[0]} samples")
+print(f"Loading training features from: {feature_training_data_path}")
+print(f"Loading testing features from: {feature_testing_data_path}")
+
+X = pd.read_csv(feature_training_data_path)
+Xt = pd.read_csv(feature_testing_data_path)
+
+Y = pd.read_csv(label_training_path)
+Yt = pd.read_csv(label_testing_path)
+
+print(f"✓ Data loaded successfully!")
+print(f"  Training samples: {X.shape[0]}, Features: {X.shape[1]}")
+print(f"  Testing samples: {Xt.shape[0]}, Features: {Xt.shape[1]}")
 
 #warnings.filterwarnings("ignore")
 
 '''section 1 grid searching'''
 
-grid = { 
+'''grid = { 
     #To add max depths
 
     'learning_rate':[0.01,0.05,0.1],
@@ -43,7 +57,7 @@ grid = {
 
 }
 
-print('Processing grid search for the gradientBT model ... pls wait ')
+print('Processing grid search ... ')
 
 gb = GradientBoostingClassifier()
 
@@ -57,9 +71,9 @@ print("Train Score:",gb_cv.best_score_)
 
 print("Test Score:",gb_cv.score(Xt,Yt))
 
-#Accuracy_Gradient_grid=accuracy_score(Yt.values.ravel(), gb_cv.predict(Xt))
+Accuracy_Gradient_grid=accuracy_score(Yt.values.ravel(), gb_cv.predict(Xt))
 
-
+'''
 
 #best_params_GBT=gb_cv.best_params_
 
@@ -68,10 +82,9 @@ gbc=GradientBoostingClassifier(n_estimators=300,learning_rate=0.1,random_state=1
 # Fit train data to GBC
 
 gbc.fit(X, Y.values.ravel())
-predicted_GBT=gbc.predict(Xt)
-Accuracy_gradientBoost_poly =accuracy_score(Yt, gbc.predict(Xt))
+Accuracy_gradientBoost =accuracy_score(Yt, gbc.predict(Xt))
 
-print("GBC accuracy is %2.2f " % (Accuracy_gradientBoost_poly))
+print("GBC accuracy is %2.2f " % (Accuracy_gradientBoost))
 
 print('Confusion matrix; ', confusion_matrix(Yt, gbc.predict(Xt)))
 
@@ -79,7 +92,7 @@ print('Classification report: ' , classification_report(Yt, gbc.predict(Xt)))
 
 '''plotting
 '''
-matrix=confusion_matrix(Yt,predicted_GBT)
+matrix=confusion_matrix(Yt,predictions_RF)
 #configuring the matrix 
 matrix = matrix.astype('float') / matrix.sum(axis=1)[:, np.newaxis]
 # Build the plot
@@ -102,13 +115,13 @@ plt.pyplot.yticks(tick_marks2, class_names, rotation=0)
 plt.pyplot.xlabel('Predicted label')
 plt.pyplot.ylabel('True label')
 plt.pyplot.subplots_adjust(left=0.2, bottom=0.2)
-plt.pyplot.title('Confusion Matrix for Gradient Boosting Tree Model using Polygon FE')
+plt.pyplot.title('Confusion Matrix for RandomForest Model using Chaicode Global FE')
 plt.pyplot.show()
 print('========= End  =========')
 # print classification report
-classif_report=classification_report(Yt, predicted_GBT)
+classif_report=classification_report(Yt, predictions_RF)
 #classif_report=matrix.astype('float')
-def plot_classification_report(cr, title='Classification report for Gradient Boosting Tree model using Polygon FE ', with_avg_total=False, cmap=plt.cm.Blues):
+def plot_classification_report(cr, title='Classification report for RandomForest model using ChaincodeGlobal FE ', with_avg_total=False, cmap=plt.cm.Blues):
     lines = cr.split('\n')
     classes = []
     plotMat = []

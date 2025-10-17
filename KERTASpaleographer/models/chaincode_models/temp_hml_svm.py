@@ -1,42 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Spyder Editor
 
-'''# -*- coding: utf-8 -*-
-""
-Spyder Editor
-
-This is a temporary script file.
-
-
-import pandas as pd
-import numpy as np
-from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score
-
-Features file X
-X = pd.read_csv (r'/Users/aymen/Documents/MATLAB/NEW FEATURES (1)/Data/training/features_training_ChainCodeGlobalFE.csv')
-Xt=pd.read_csv (r'/Users/aymen/Documents/MATLAB/NEW FEATURES (1)/Data/testing/features_testing_ChainCodeGlobalFE.csv')
-
-Y = pd.read_csv (r'/Users/aymen/Documents/MATLAB/NEW FEATURES (1)/Data/training/label_training.csv')
-Yt=pd.read_csv (r'/Users/aymen/Documents/MATLAB/NEW FEATURES (1)/Data/testing/label_testing.csv')
-X et Xt sont le training et testing dataset 
-Y et Yt sont le training et testing labels 
-
-g=90
-c=82
-
-print('gamma is ', g , ': ' , 'and c is :', c)
-#for c in np.arange (0.01, 2.02, 0.1):
-Instance_SVM=SVC(kernel='rbf',C=c,gamma=g)
-Instance_SVM.fit(X,Y.values.ravel()) #classification
-predicted_dates=Instance_SVM.predict(Xt) 
-Accuracy= accuracy_score(Yt, predicted_dates)*100 #c'est du classfication alors en peut....
-print(Accuracy , '%')
-'''
-
-This is a temporary script file.
-"""
 
 import pandas as pd
 from sklearn.svm import SVC
@@ -48,7 +11,8 @@ import seaborn as sns
 import os
 
 # Dynamic paths - works anywhere after cloning from GitHub
-script_dir = os.path.dirname(os.path.abspath(__file__))
+# Go up two levels: from models/chaincode_models/ to KERTASpaleographer/
+script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 '''Features file X'''
 '''chaincode FE'''

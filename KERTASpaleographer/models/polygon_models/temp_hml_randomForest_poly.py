@@ -18,7 +18,8 @@ import seaborn as sns
 import os
 
 # Dynamic paths - works anywhere after cloning from GitHub
-script_dir = os.path.dirname(os.path.abspath(__file__))
+# Go up two levels: from models/polygon_models/ to KERTASpaleographer/
+script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 #Accuracy score do not work on regression
 '''Features file X'''

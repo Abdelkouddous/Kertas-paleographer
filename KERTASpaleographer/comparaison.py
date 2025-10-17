@@ -14,18 +14,28 @@ Comparaison
 
 import numpy as np
 import matplotlib.pyplot as plt
-from temp_hml_randomForest import accuracy_randomForest
-from temp_hml_svm import Accuracy_SVM
-from temp_hml_Adaboost import Accuracy_adaBoost
 
-from temp_hml_poly_svm import Accuracy_SVM_Poly
-from temp_hlm_GradientBT import Accuracy_Gradient_grid
+# ChainCode Models
+from models.chaincode_models.temp_hml_randomForest import accuracy_randomForest
+from models.chaincode_models.temp_hml_svm import Accuracy_SVM
+from models.chaincode_models.temp_hml_Adaboost import Accuracy_adaBoost
+from models.chaincode_models.temp_hml_2_GradientBT import Accuracy_Gradient_grid
+
+# Polygon Models
+from models.polygon_models.temp_hml_poly_svm import Accuracy_SVM_Poly
+from models.polygon_models.temp_hml_poly_GradientBT import Accuracy_gradientBoost_poly
+from models.polygon_models.temp_hml_randomForest_poly import Accuracy_randomForest_poly
+
+
       
 Classification = {
-                'ChainCodeGlobal_SVM': [round(Accuracy_SVM,2)], 'ChainCodeGlobal_RF': [round(accuracy_randomForest,2)], 'ChainCodeGlobal_AdaBoost':[round(Accuracy_adaBoost,2)] ,
-              'ChainCodeGlobal_Gradient': [round(Accuracy_Gradient,2)],
-              'Polygon_SVM':[round(Accuracy_SVM_Poly,2)], 'Polygon_RF':[0],'Polygon_AdaBoost':[] ,'Polygon_GBT':[],
-              'F3_C3':[], 'F3_C3':[]
-                  }
+              'ChainCodeGlobal_SVM': [round(Accuracy_SVM,2)], 
+              'ChainCodeGlobal_RF': [round(accuracy_randomForest,2)], 
+              'ChainCodeGlobal_AdaBoost':[round(Accuracy_adaBoost,2)] ,
+              'ChainCodeGlobal_Gradient': [round(Accuracy_Gradient_grid,2)],
+              'Polygon_SVM':[round(Accuracy_SVM_Poly,2)], 
+              'Polygon_RF':[round(Accuracy_randomForest_poly,2)],
+              'Polygon_AdaBoost':[] ,
+              'Polygon_GBT':[round(Accuracy_gradientBoost_poly,2)],                  }
 
 

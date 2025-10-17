@@ -21,7 +21,8 @@ import seaborn as sns
 import os
 
 # Dynamic paths - works anywhere after cloning from GitHub
-script_dir = os.path.dirname(os.path.abspath(__file__))
+# Go up two levels: from models/chaincode_models/ to KERTASpaleographer/
+script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 X = pd.read_csv(os.path.join(script_dir, 'training', 'features_training_ChainCodeGlobalFE.csv'))
 Xt = pd.read_csv(os.path.join(script_dir, 'testing', 'features_testing_chainCodeGlobalFE.csv'))

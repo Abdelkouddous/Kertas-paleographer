@@ -3,7 +3,7 @@
 """
 Created on Thu Apr 28 12:25:41 2022
 
-@author: aymen
+@author: aymen abdelkouddous hamel
 GBT
 """
 # Import all relevant libraries
@@ -20,10 +20,11 @@ import seaborn as sns
 import os
 
 # Dynamic paths - works anywhere after cloning from GitHub
-script_dir = os.path.dirname(os.path.abspath(__file__))
+# Go up two levels: from models/polygon_models/ to KERTASpaleographer/
+script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-X = pd.read_csv(os.path.join(script_dir, 'training', 'features_training_ChainCodeGlobalFE.csv'))
-Xt = pd.read_csv(os.path.join(script_dir, 'testing', 'features_testing_chainCodeGlobalFE.csv'))
+X = pd.read_csv(os.path.join(script_dir, 'training', 'features_training_PolygonFE.csv'))
+Xt = pd.read_csv(os.path.join(script_dir, 'testing', 'features_testing_PolygonFE.csv'))
 
 Y = pd.read_csv(os.path.join(script_dir, 'training', 'label_training.csv'))
 Yt = pd.read_csv(os.path.join(script_dir, 'testing', 'label_testing.csv'))

@@ -271,7 +271,7 @@ class AdaBoostTrainer(ModelTrainer):
         print("="*60)
         
         DTC = DecisionTreeClassifier(random_state=11,
-                                     max_features="auto",
+                                     max_features=0.8,
                                      class_weight="balanced",
                                      max_depth=None)
         

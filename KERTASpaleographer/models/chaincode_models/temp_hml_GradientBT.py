@@ -1,76 +1,86 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sat Apr 23 02:12:41 2022
+Created on Thu Apr 28 12:25:41 2022
 
 @author: aymen
+GBT
 """
+# Import all relevant libraries
 
-from sklearn.ensemble import AdaBoostClassifier
-#from sklearn.ensemble import AdaBoostRegressor
-#Creating decision tree stump model
-import pandas as pd
-from sklearn.datasets import load_wine
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-from sklearn.model_selection import GridSearchCV
-from sklearn.tree import DecisionTreeClassifier
-#
+from sklearn.ensemble import GradientBoostingClassifier
 import numpy as np
+import pandas as pd
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+#import warnings
+from sklearn.model_selection import GridSearchCV
+#
 import matplotlib as plt
 import seaborn as sns
 import os
 
 # Dynamic paths - works anywhere after cloning from GitHub
-script_dir = os.path.dirname(os.path.abspath(__file__))
+# Go up two levels: from models/chaincode_models/ to KERTASpaleographer/
+script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-X = pd.read_csv(os.path.join(script_dir, 'training', 'features_training_PolygonFE.csv'))
-Xt = pd.read_csv(os.path.join(script_dir, 'testing', 'features_testing_PolygonFE.csv'))
+X = pd.read_csv(os.path.join(script_dir, 'training', 'features_training_ChainCodeGlobalFE.csv'))
+Xt = pd.read_csv(os.path.join(script_dir, 'testing', 'features_testing_chainCodeGlobalFE.csv'))
 
 Y = pd.read_csv(os.path.join(script_dir, 'training', 'label_training.csv'))
 Yt = pd.read_csv(os.path.join(script_dir, 'testing', 'label_testing.csv'))
 
 print(f"✓ Data loaded | Training: {X.shape[0]} samples, Testing: {Xt.shape[0]} samples")
 
-wine = load_wine()
+#warnings.filterwarnings("ignore")
 
-# run grid search
-param_grid = {"estimator__criterion" : ["gini", "entropy"],
-              "estimator__splitter" :   ["best", "random"],
-              "n_estimators": [1, 2]
-             }
+'''section 1 grid searching'''
 
+grid = { 
+    #To add max depths
 
-DTC = DecisionTreeClassifier(random_state = 11,
-                             max_features = "auto",
-                             class_weight = "balanced",
-                             max_depth = None)
+    'learning_rate':[0.01,0.05,0.1],
 
-ABC = AdaBoostClassifier(estimator = DTC)
-#grid_search = GridSearchCV(estimator=model, param_grid=grid, n_jobs=-1, cv=cv, scoring='accuracy')
-grid_search_ABC = GridSearchCV(ABC, param_grid=param_grid,scoring = 'accuracy')
-grid_search_ABC.fit(X,Y.values.ravel()) #Classification
-predicted_ABC=grid_search_ABC.predict(Xt)
-#accuracy_adaBoost_grid = accuracy_score(Yt, predicted_ABC)
-#best_params_ABC=grid_search_ABC.best_params_
-#print("Best: %f using %s" % (grid_search_ABC.best_score_ , best_params_ABC))
-#adaclf_train_sc = accuracy_score(Y, ABC.predict(X))
-#print('classification report: ',classification_report(Yt, ABC.predict(Xt)), '===')
-#print('AdaBoost  accuracies %.3f' % (Accuracy_adaBoost_grid))
+    'n_estimators':np.arange(100,400,100),
 
-adaclf = AdaBoostClassifier(DTC)
-adaclf.fit(X, Y.values.ravel())
-predicted=adaclf.predict(Xt)
-Accuracy_adaBoost_poly = accuracy_score(Yt, predicted)
-print(classification_report(Yt, predicted))
-print('Classification report :\n ', classification_report(Yt, predicted))
-print( 'Adaboost confusion matrix : \n' , confusion_matrix(Yt,predicted))
-print('Adaptive boosting tree accuracies %.3f' % (Accuracy_adaBoost_poly))
-#Create an AdaBoost classification model
+}
+
+print('Processing grid search ... ')
+
+gb = GradientBoostingClassifier()
+
+gb_cv = GridSearchCV(gb, grid, cv = 4) #cv=4 default
+
+gb_cv.fit(X, Y.values.ravel())
+
+print("Best Parameters:",gb_cv.best_params_)
+
+print("Train Score:",gb_cv.best_score_)
+
+print("Test Score:",gb_cv.score(Xt,Yt))
+
+#Accuracy_Gradient_grid=accuracy_score(Yt.values.ravel(), gb_cv.predict(Xt))
 
 
-#Raveling
 
-matrix=confusion_matrix(Yt,predicted)
+#best_params_GBT=gb_cv.best_params_
+
+gbc=GradientBoostingClassifier(n_estimators=300,learning_rate=0.1,random_state=100 )
+
+# Fit train data to GBC
+
+gbc.fit(X, Y.values.ravel())
+predicted_GBT=gbc.predict(Xt)
+Accuracy_gradientBoost =accuracy_score(Yt, gbc.predict(Xt))
+
+print("GBC accuracy is %2.2f " % (Accuracy_gradientBoost))
+
+print('Confusion matrix; ', confusion_matrix(Yt, gbc.predict(Xt)))
+
+print('Classification report: ' , classification_report(Yt, gbc.predict(Xt)))
+
+'''plotting
+'''
+matrix=confusion_matrix(Yt,predicted_GBT)
 #configuring the matrix 
 matrix = matrix.astype('float') / matrix.sum(axis=1)[:, np.newaxis]
 # Build the plot
@@ -93,13 +103,13 @@ plt.pyplot.yticks(tick_marks2, class_names, rotation=0)
 plt.pyplot.xlabel('Predicted label')
 plt.pyplot.ylabel('True label')
 plt.pyplot.subplots_adjust(left=0.2, bottom=0.2)
-plt.pyplot.title('Confusion Matrix for Adaboost Model using Polygon FE')
+plt.pyplot.title('Confusion Matrix for Gradient Boosting Tree Model using ChaicodeGlobal FE')
 plt.pyplot.show()
 print('========= End  =========')
 # print classification report
-classif_report=classification_report(Yt, predicted)
+classif_report=classification_report(Yt, predicted_GBT)
 #classif_report=matrix.astype('float')
-def plot_classification_report(cr, title='Classification report for Adaboost model using Polygon FE ', with_avg_total=False, cmap=plt.cm.Blues):
+def plot_classification_report(cr, title='Classification report for Gradient Boosting Tree model using ChaincodeGlobal FE ', with_avg_total=False, cmap=plt.cm.Blues):
     lines = cr.split('\n')
     classes = []
     plotMat = []
@@ -133,5 +143,3 @@ def plot_classification_report(cr, title='Classification report for Adaboost mod
     #plt.pyplot.subplots_adjust(left=0.2, bottom=0.2)
     ##sns.heatmap(plotMat, annot=True) ##
 plot_classification_report(classif_report, with_avg_total=True)
-
-
