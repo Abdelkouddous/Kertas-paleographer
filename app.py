@@ -1110,7 +1110,7 @@ def main():
         with doc_col2:
             st.markdown("""
             **User Guides:**
-            - 🎨 UI_GUIDE.md
+            
             - 💻 Command Line Guide
             - 🔧 Configuration Guide
             """)
@@ -1118,9 +1118,7 @@ def main():
         with doc_col3:
             st.markdown("""
             **Advanced:**
-            - 🐛 FIX_APPLIED.md
-            - 🌐 GITHUB_READY.md
-            - 🧪 Testing Guide
+            - 🧪 Testing Guide in TESTING_GUIDE.md
             """)
         
         st.markdown("---")
