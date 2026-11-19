@@ -1,5 +1,7 @@
 # Machine Learning Classification System
 
+**Master's thesis — 2022.** This GitHub repository was created in October 2025 when the thesis code was published online. The research itself is a 2022 master's thesis project.
+
 A comprehensive machine learning classification system for comparing different ML algorithms across multiple feature extraction methods.
 
 ## 📋 Overview
